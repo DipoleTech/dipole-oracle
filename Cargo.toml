@@ -1,0 +1,12 @@
+[profile.release]
+panic = 'unwind'
+
+[workspace]
+members = [
+    'node',
+    'pallets/operator', 
+    'pallets/goods_oracle', 
+    'pallets/pay_oracle', 
+    'pallets/collector', 
+    'runtime',
+]

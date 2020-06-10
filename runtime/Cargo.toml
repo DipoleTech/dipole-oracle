@@ -1,0 +1,87 @@
+[package]
+authors = ['dipole developers']
+build = 'build.rs'
+description = 'dipole oracle node'
+edition = '2018'
+homepage = 'https://www.dipole.tech/'
+name = 'dipole-oracle-runtime'
+repository = 'https://github.com/DipoleTech/dipole-oracle/'
+version = '2.0.0-rc2'
+
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[build-dependencies]
+wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '1.0.5', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2'}
+
+[dependencies]
+# substrate
+frame-executive = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false }
+frame-support = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false }
+system = { package = 'frame-system', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-api = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-block-builder = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-consensus-aura = { version = '0.8.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-core = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-io = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-inherents = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-offchain = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-runtime = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-session = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-std = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-transaction-pool = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sp-version = { version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+aura = { package = 'pallet-aura', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+balances = { package = 'pallet-balances', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+grandpa = { package = 'pallet-grandpa', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+randomness-collective-flip = { package = 'pallet-randomness-collective-flip', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+sudo = { package = 'pallet-sudo', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+timestamp = { package = 'pallet-timestamp', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+transaction-payment = { package = 'pallet-transaction-payment', version = '2.0.0-rc2', git = 'https://github.com/paritytech/substrate.git',  tag = 'v2.0.0-rc2', default-features = false  }
+codec = { package = 'parity-scale-codec', features = ['derive'], version = '1.3.0', default-features = false }
+serde = { features = ['derive'], optional = true, version = '1.0.101' }
+
+
+# dipole oracle
+support = { path = '../pallets/support', default-features = false }
+operator = { path = '../pallets/operator', default-features = false }
+goods-oracle = { path = '../pallets/goods_oracle', default-features = false }
+pay-oracle = { path = '../pallets/pay_oracle', default-features = false }
+collector= { path = '../pallets/collector', default-features = false }
+
+
+[features]
+default = ['std']
+std = [
+    'aura/std',
+    'balances/std',
+    'codec/std',
+    'frame-executive/std',
+    'frame-support/std',
+    'grandpa/std',
+    'randomness-collective-flip/std',
+    'serde',
+    'sp-api/std',
+    'sp-block-builder/std',
+    'sp-consensus-aura/std',
+    'sp-core/std',
+    'sp-inherents/std',
+    'sp-io/std',
+    'sp-offchain/std',
+    'sp-runtime/std',
+    'sp-session/std',
+    'sp-std/std',
+    'sp-transaction-pool/std',
+    'sp-version/std',
+    'sudo/std',
+    'system/std',
+    'timestamp/std',
+    'transaction-payment/std',
+
+    'support/std',
+    'operator/std',
+    'goods-oracle/std',
+    'pay-oracle/std',
+    'collector/std',
+]
