@@ -12,10 +12,9 @@ use sp_std::{
 
 use sp_runtime::{
 	traits::{AtLeast32Bit, MaybeSerializeDeserialize},
-	RuntimeDebug,
+	RuntimeDebug, DispatchResult
 };
 use codec::{Encode, Decode, FullCodec};
-
 
 
 // operator
@@ -26,8 +25,10 @@ pub struct Did {
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum OperatorRole {
-	Producer = 0,
-	Consumer,
+	PublicProducer = 0,
+	PublicConsumer,
+	PrivateProducer,
+	PrivateConsumer,
 	Payer,
 }
 
@@ -35,6 +36,13 @@ pub enum OperatorRole {
 pub enum OperatorCategory {
 	ElectricMeter = 0,
 	ChargingPoint,
+}
+
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
+pub enum VolumeType {
+	Peak = 0,
+	Flat,
+	Valley,
 }
 
 #[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
@@ -46,13 +54,25 @@ pub struct Operator<AccountId, OperatorRole, OperatorCategory> {
 }
 
 pub trait OperatorManager<Did, AccountId, OperatorRole, OperatorCategory> {
-
+	fn register_operator(who: AccountId, role: OperatorRole, category: OperatorCategory) -> DispatchResult;
 	fn get_operator(id: Did) -> Option<Operator<AccountId, OperatorRole, OperatorCategory>>;
 	fn get_owned_operators(id: AccountId) -> Vec<Did>;
-
 }
 
 // goods data
+#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
+pub struct RawVolume {
+	pub volume_type: VolumeType,
+	pub volume: u64,
+}
+
+#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone)]
+pub struct OperatorVolume<Did> {
+	pub operator_id: Did,
+	pub operator_raw_volume: Vec<RawVolume>,
+}
+
+
 #[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
 pub struct TimestampedVolume<Moment> {
 	pub volume: u64,
@@ -60,23 +80,31 @@ pub struct TimestampedVolume<Moment> {
 }
 
 #[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
-pub struct OperatorVolume<Did> {
-	pub operator_id: Did,
-	pub volume: u64,
+pub struct GoodsOperatorRawVolume<Moment> {
+	pub volume_type: VolumeType,
+	pub timestamed_volume: TimestampedVolume<Moment>,
 }
 
 #[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
-pub struct GoodsOracle<Did, TimestampedVolume>{
+pub struct GoodsOperatorVolume<Moment> {
+	pub volume_type: VolumeType,
+	pub init_volume: TimestampedVolume<Moment> ,
+	pub current_volume: TimestampedVolume<Moment>,
+}
+
+#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone)]
+pub struct GoodsOracle<Did, Moment>{
 	pub oracle_operator_id: Did,
-	pub init_volume: TimestampedVolume,
-	pub current_volume: TimestampedVolume,
+	pub goods_operator_volume: Vec<GoodsOperatorVolume<Moment>>,
 }
 
-#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy)]
+#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone)]
 pub struct GoodsOracleData<AccountId>{
 	pub owner: AccountId,
-	pub consumer_volume: u64,
-	pub producer_volume: u64,
+	pub public_consumer_volume: Vec<RawVolume>,
+	pub public_producer_volume: Vec<RawVolume>,
+	pub private_consumer_volume: Vec<RawVolume>,
+	pub private_producer_volume: Vec<RawVolume>,
 }
 
 pub trait GoodsDataProvider<AccountId> {
@@ -126,9 +154,9 @@ pub struct CollectorData<AccountId, PayId, Balance>{
 	pub pay_oracle_data: Vec<PayOracleData<PayId, Balance>>,
 }
 
-pub trait CollectorManager{
+pub trait CollectorManager<AccountId, PayId, Balance>{
 
-	fn collect_oracle_data();
-
+	fn collect_oracle_data()->  Option<CollectorData<AccountId, PayId, Balance>>;
+	fn get_collect_oracle_data() ->  Option<CollectorData<AccountId, PayId, Balance>>;
 }
 

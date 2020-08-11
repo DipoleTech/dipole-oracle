@@ -2,10 +2,13 @@
     "Did":"([u8; 32])",
     "PayId": "u32",
     "OperatorRole":{
-        "_enum": ["Producer", "Consumer", "Payer"]
+        "_enum": ["PublicProducer", "PublicConsumer", "PrivateProducer", "PrivateConsumer", "Payer"]
     },
     "OperatorCategory":{
         "_enum": ["ElectricMeter", "ChargingPoint"]
+    },
+    "VolumeType":{
+        "_enum": ["Peak", "Flat", "Valley"]
     },
     "Operator":{
         "owner": "AccountId",
@@ -13,23 +16,37 @@
         "category": "OperatorCategory",
         "is_legal": "bool"
     },
+    "RawVolume": {
+        "volume_type": "VolumeType",
+        "volume": "u64"
+    },
+    "OperatorVolume": {
+        "operator_id": "Did",
+        "operator_raw_volume": "Vec<RawVolume>"
+    },
     "TimestampedVolume": {
         "volume": "u64",
         "timestamp": "Moment"
     },
-    "OperatorVolume": {
-        "operator_id": "Did",
-        "volume": "u64"
+    "GoodsOperatorRawVolume": {
+        "volume_type": "VolumeType",
+        "timestamed_volume": "TimestampedVolume"
     },
-    "GoodsOracle":{
-        "oracle_operator_id": "Did",
+    "GoodsOperatorVolume": {
+        "volume_type": "VolumeType",
         "init_volume": "TimestampedVolume",
         "current_volume": "TimestampedVolume"
     },
+    "GoodsOracle":{
+        "oracle_operator_id": "Did",
+        "goods_operator_volume": "Vec<GoodsOperatorVolume>"
+    },
     "GoodsOracleData":{
         "owner": "AccountId",
-        "consumer_volume": "u64",
-        "producer_volume": "u64"
+        "public_consumer_volume": "Vec<RawVolume>",
+        "public_producer_volume": "Vec<RawVolume>",
+        "private_consumer_volume": "Vec<RawVolume>",
+        "private_producer_volume": "Vec<RawVolume>"
     },
     "TimestampedPrice": {
         "price": "Balance",

@@ -3,26 +3,31 @@
 #![allow(clippy::string_lit_as_bytes)]
 
 
-use system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, StorageMap, StorageValue, 
-	traits::{Randomness},
+	traits::{Randomness, Get},
 };
 use sp_std::{prelude::*};
 use sp_runtime::{DispatchResult};
 use sp_io::hashing::blake2_256;
 use codec::{Encode};
 use randomness;
-use support::{Did, OperatorRole, OperatorCategory, Operator, OperatorManager};
+use utilities::{Did, OperatorRole, OperatorCategory, Operator, OperatorManager};
 
+#[cfg(test)]
+mod mock;
 
-pub trait Trait: system::Trait {
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+#[cfg(test)]
+mod tests;
+
+pub trait Trait: frame_system::Trait {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
 decl_event!(
 	pub enum Event<T> where
-		<T as system::Trait>::AccountId,
+		<T as frame_system::Trait>::AccountId,
 	{
 		// A new operator has been registered
 		OperatorRegistered(AccountId),
@@ -60,7 +65,6 @@ decl_storage! {
 		AllPayOperators get(fn all_pay_operators): Vec<T::AccountId>;
 		// owned operators
 		OwnedOperators get(fn owned_operators_in_pool):  map hasher(twox_64_concat) T::AccountId => Vec<Did>;
-
 	}
 }
 
@@ -70,7 +74,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		// Register a new Operator.
-		#[weight = 10_000]
+		#[weight = 10_000 + T::DbWeight::get().reads_writes(3,6)]
 		pub fn register_operator(
 			origin,
 			role: OperatorRole,
@@ -85,7 +89,7 @@ decl_module! {
 		}
 
 		// close an existing Operator
-		#[weight = 10_000]
+		#[weight = 10_000 + T::DbWeight::get().reads_writes(3,2)]
 		pub fn close_operator(
 			origin,
 			operator_id: Did,
@@ -109,18 +113,25 @@ impl<T: Trait> Module<T> {
         let did = blake2_256(&encoded);
 		let new_operator_id = Did { did };
 		
-		let new_operator = Operator {
-			owner: who.clone(),
-			role: role,
-			category: category,
-			is_legal: true,
-		};
-
-		<Operators<T>>::insert(new_operator_id.clone(), &new_operator);
+		Self::new_operator(who.clone(), new_operator_id.clone(), role.clone(), category.clone())?;
 		<OperatorsCount>::put(nonce.clone()+1);
 		<OperatorsIndex>::insert(nonce.clone(), new_operator_id.clone());
 
-		Self::_add_operator_to_owned_operators_pool(who.clone(), new_operator_id.clone());
+		Ok(())
+	}
+
+	fn new_operator(who: T::AccountId, id: Did, role: OperatorRole, category: OperatorCategory) -> DispatchResult {
+	
+		let new_operator = Operator {
+			owner: who.clone(),
+			role: role.clone(),
+			category: category.clone(),
+			is_legal: true,
+		};
+
+		<Operators<T>>::insert(id.clone(), &new_operator);
+
+		Self::_add_operator_to_owned_operators_pool(who.clone(), id.clone());
 
 		if role == OperatorRole::Payer{
 			if !Self::all_pay_operators().contains(&who){
@@ -134,11 +145,18 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
+	fn update_operator(id: Did, new_operator: Operator<T::AccountId, OperatorRole, OperatorCategory>) -> DispatchResult {
+		Self::operator(id.clone()).ok_or(Error::<T>::UnknownOperator)?;
+		<Operators<T>>::insert(id, &new_operator);
+		Ok(())
+	}
+
 	fn _close_operator(who: T::AccountId, operator_id: Did) -> DispatchResult {
 		let mut operator = Self::operator(operator_id.clone()).ok_or(Error::<T>::UnknownOperator)?;
 		operator.is_legal = false;
 		Self::_remove_operator_from_owned_operators_pool(who.clone(), operator_id.clone());
-		<Operators<T>>::insert(operator_id, &operator);
+		// <Operators<T>>::insert(operator_id, &operator);
+		Self::update_operator(operator_id.clone(), operator.clone())?;
 		Ok(())
 	}
 }
@@ -177,9 +195,14 @@ impl<T: Trait> Module<T> {
 }
 
 impl<T: Trait> OperatorManager<Did, T::AccountId, OperatorRole, OperatorCategory> for Module<T> {
+	fn register_operator(who: T::AccountId, role: OperatorRole, category: OperatorCategory) -> DispatchResult{
+		Self::_register_operator(who, role, category)
+	}
+
 	fn get_operator(id: Did) -> Option<Operator<T::AccountId, OperatorRole, OperatorCategory>>{
 		Self::operator(id)
 	}
+
 	fn get_owned_operators(id: T::AccountId) -> Vec<Did>{
 		Self::owned_operators_in_pool(id)
 	}

@@ -2,10 +2,10 @@
 #![recursion_limit = "256"]
 #![allow(clippy::string_lit_as_bytes)]
 
-use system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, StorageMap, StorageValue, ensure, Parameter,
-	traits::{Time},
+	traits::{Time, Get},
 	dispatch::Vec,
 };
 use sp_runtime::{
@@ -16,13 +16,18 @@ use sp_std::{
 	cmp::{Eq, PartialEq},
 	prelude::*,
 };
-use support::{Did, OperatorRole, OperatorCategory, OperatorManager, TimestampedPrice, OperatorPrice, PayOracle, PayDataProvider};
+use utilities::{Did, OperatorRole, OperatorCategory, OperatorManager, TimestampedPrice, OperatorPrice, PayOracle, PayDataProvider};
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 type MomentOf<T> = <<T as Trait>::Time as Time>::Moment;
 
-pub trait Trait: system::Trait {
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+pub trait Trait: frame_system::Trait {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 	type PayId: Parameter + Member + AtLeast32Bit + Default + Copy + MaybeSerializeDeserialize;
 	type Balance: Parameter + Member + AtLeast32Bit + Default + Copy + MaybeSerializeDeserialize;
 
@@ -32,7 +37,7 @@ pub trait Trait: system::Trait {
 
 decl_event!(
 	pub enum Event<T> where
-		<T as system::Trait>::AccountId,
+		<T as frame_system::Trait>::AccountId,
 	{	
 		/// New feed pay data (sender, Did, OperatorPrice)
 		NewFeedPayData(AccountId, Did),
@@ -67,10 +72,10 @@ decl_module! {
 		type Error = Error<T>;
 		fn deposit_event() = default;
 		
-		#[weight = 10_000]
+		#[weight = 10_000 + T::DbWeight::get().reads_writes(2,2)]
 		pub fn feed_pay_data(origin, operator_id: Did, pay_prices: Vec<OperatorPrice<T::PayId, T::Balance>>) {
 			let who = ensure_signed(origin)?;
-			Self::_feed_pay_data(operator_id.clone(), pay_prices)?;
+			Self::feed_data(operator_id.clone(), pay_prices)?;
 			Self::deposit_event(RawEvent::NewFeedPayData(who, operator_id));
 		}
 	}
@@ -78,7 +83,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 
-	fn _feed_pay_data(operator_id: Did, pay_prices: Vec<OperatorPrice<T::PayId, T::Balance>>) -> DispatchResult {
+	fn feed_data(operator_id: Did, pay_prices: Vec<OperatorPrice<T::PayId, T::Balance>>) -> DispatchResult {
 		let operator = T::Operator::get_operator(operator_id.clone()).ok_or(Error::<T>::UnknownOperator)?;
 		ensure!(operator.is_legal, Error::<T>::NoPermission);
 

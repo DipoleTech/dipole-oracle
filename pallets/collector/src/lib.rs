@@ -6,13 +6,14 @@
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, StorageValue, 
 	dispatch::Vec,
+	traits::Get,
 };
-use system::{self as system, ensure_signed};
+use frame_system::ensure_signed;
 use sp_std::{ 
 	cmp::{Eq, PartialEq},
 	prelude::*,
 };
-use support::{ 
+use utilities::{ 
 	Did, OperatorRole, OperatorCategory, OperatorManager, GoodsOracleData,
 	GoodsDataProvider,PayOracleData, PayDataProvider,CollectorData,CollectorManager,
 };
@@ -22,8 +23,8 @@ type PayIdOf<T> = <<T as Trait>::PayDataProvider as PayDataProvider>::PayId;
 
 
 
-pub trait Trait: system::Trait {
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+pub trait Trait: frame_system::Trait {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type Operator: OperatorManager<Did, Self::AccountId, OperatorRole, OperatorCategory>;
 	type GoodsDataProvider: GoodsDataProvider<Self::AccountId>;
@@ -32,7 +33,7 @@ pub trait Trait: system::Trait {
 
 decl_event!(
 	pub enum Event<T> where
-		<T as system::Trait>::AccountId,
+		<T as frame_system::Trait>::AccountId,
 	{
 		CollectOracleData(AccountId),
 	}
@@ -56,7 +57,7 @@ decl_module! {
 		type Error = Error<T>;
 		fn deposit_event() = default;
 
-		#[weight = 10_000]
+		#[weight = 10_000 + T::DbWeight::get().reads_writes(4,1)]
 		fn collect_oracle_data(
 			origin,
 		) {
@@ -71,7 +72,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 
-	pub fn _collect_oracle_data(){
+	pub fn _collect_oracle_data() -> Option<CollectorData<T::AccountId, PayIdOf<T>, BalanceOf<T>>>{
 		let goods_owners = T::GoodsDataProvider::get_goods_owners_in_update_pool();
 		let mut goods_oracle_data: Vec<GoodsOracleData<T::AccountId>>  = Vec::new();
 		for i in  goods_owners{
@@ -97,16 +98,21 @@ impl<T: Trait> Module<T> {
 				pay_oracle_data: pay_oracle_data,
 			};
 			<CollectorDatas<T>>::put(&new_collect_data);
+			return Some(new_collect_data)
 		}
+		None
 		
 
 	}
 
 }
 
-impl<T: Trait> CollectorManager for Module<T> {
-	fn collect_oracle_data(){
+impl<T: Trait> CollectorManager<T::AccountId, PayIdOf<T>, BalanceOf<T>> for Module<T> {
+	fn collect_oracle_data() ->  Option<CollectorData<T::AccountId, PayIdOf<T>, BalanceOf<T>>>{
 		Self::_collect_oracle_data()
+	}
+	fn get_collect_oracle_data() ->  Option<CollectorData<T::AccountId, PayIdOf<T>, BalanceOf<T>>>{
+		Self::collect_data()
 	}
 }
 
