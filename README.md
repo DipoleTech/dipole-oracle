@@ -20,11 +20,15 @@ This project is initiated and facilitated by [Dipole Tech](https://dipole.tech/)
 
 The application scenarios of our system are electricity trading and energy management, and the participating users and equipment are relatively credible. Through blockchain technology, the open, transparent, and automated matching of the transaction process is guaranteed, and the energy use data is confirmed by multiple parties. The operator is responsible for installing metering equipment. In the traditional measurement process, the entire data process is controlled by the operator, and users only get the final billing result. The data and interpretation rights of the relevant measurement are all managed by the operator. In actual business scenarios, problems such as data tampering are prone to occur. If distributed energy transactions are constructed on this basis, higher costs will be required for auditing and supervision.
 
+<img src="./img/dipoleoraclebp.png" style="zoom:150%;" />
+
 DipoleOracle allows the operator to only be responsible for the deployment of the equipment, instead of sealing all the data in the operator's system. The whole process of data measurement and billing is completed by multiple nodes of the alliance chain. Users can check the measurement data on the comparison chain and their own electricity consumption at any time.
 
 DipoleOracle connects Dipole chain and offchain electrical hardware, ensure the safety and accuracy of  offchain power usage and transaction data, make them applicable for blockchain use.  Which can enrich  the ecosystem of Substrate and Polkadot, and bring  the  revolution of clean energy ecology in whole society.
 
 Dipole Oracle aims to build a reliable and efficient platform to connect the offchain power usage data and power transaction data to blockchain service. Dipole Oracle's mission is to accelerate the clean energy ecology revolution, and enrich the ecology of [Substrate](https://substrate.dev/) and [Polkadot](https://polkadot.network/). Onchain authorization, offchain upload and exchange, fine-grained permission control for data upload and sharing，based on the unforgeable characteristics of the blockchain, the data exchange records are put on the chain to ensure that the data sovereignty can be traced in the later stage, and the dispute on the correctness of the shared data can be solved.
+
+
 
 # 2. Overview.
 
