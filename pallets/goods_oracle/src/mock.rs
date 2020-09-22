@@ -1,21 +1,20 @@
 // Creating mock runtime here
 use super::*;
 use crate::{Module, Trait};
-use sp_core::H256;
-use frame_support::{
-	impl_outer_origin, parameter_types, weights::Weight,
-	traits::Time,
-};
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup}, testing::Header, Perbill,
-};
+use frame_support::{impl_outer_origin, parameter_types, traits::Time, weights::Weight};
 use frame_system as system;
-use std::cell::RefCell;
-use utilities::{
-	Did, Operator, OperatorRole, OperatorCategory, VolumeType,
+use sp_core::H256;
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+	Perbill,
 };
+use std::cell::RefCell;
+use utilities::{Did, Operator, OperatorCategory, OperatorRole, VolumeType};
 
 pub const VOLUME_TYPE_PEAK: VolumeType = VolumeType::Peak;
+pub const VOLUME_TYPE_FLAT: VolumeType = VolumeType::Flat;
+pub const VOLUME_TYPE_VALLEY: VolumeType = VolumeType::Valley;
 impl_outer_origin! {
 	pub enum Origin for Test {}
 }
@@ -72,9 +71,7 @@ impl Time for Timestamp {
 	}
 }
 
-
-
-pub struct MockOperator{
+pub struct MockOperator {
 	pub owner: AccountId,
 	pub role: OperatorRole,
 	pub category: OperatorCategory,
@@ -82,21 +79,24 @@ pub struct MockOperator{
 }
 
 impl OperatorManager<Did, AccountId, OperatorRole, OperatorCategory> for MockOperator {
-	fn register_operator(_who: AccountId, _role: OperatorRole, _category: OperatorCategory) -> DispatchResult{
+	fn register_operator(
+		_who: AccountId,
+		_role: OperatorRole,
+		_category: OperatorCategory,
+	) -> DispatchResult {
 		Ok(())
 	}
 
-	fn get_operator(_id: Did) ->  Option<Operator<AccountId, OperatorRole, OperatorCategory>>{
-		Some( 
-			Operator {
-                owner: 2,
-                role: OperatorRole::PrivateProducer,
-                category: OperatorCategory::ElectricMeter,
-                is_legal: true,
-            })
+	fn get_operator(_id: Did) -> Option<Operator<AccountId, OperatorRole, OperatorCategory>> {
+		Some(Operator {
+			owner: 2,
+			role: OperatorRole::PrivateProducer,
+			category: OperatorCategory::ElectricMeter,
+			is_legal: true,
+		})
 	}
 
-	fn get_owned_operators(_id: AccountId) -> Vec<Did>{
+	fn get_owned_operators(_id: AccountId) -> Vec<Did> {
 		Vec::new()
 	}
 }
@@ -112,5 +112,8 @@ pub type GoodsOracleModule = Module<Test>;
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }
